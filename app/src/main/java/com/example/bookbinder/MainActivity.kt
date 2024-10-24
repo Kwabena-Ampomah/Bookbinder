@@ -19,8 +19,7 @@ import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import retrofit2.http.GET
 import retrofit2.http.Query
-
-// Google Books API Interface
+// Slide 47:
 interface GoogleBooksApi {
     @GET("volumes")
     suspend fun searchBooks(
@@ -29,7 +28,7 @@ interface GoogleBooksApi {
     ): BookResponse
 }
 
-// Retrofit setup
+// Slide 50
 object RetrofitInstance {
     private const val BASE_URL = "https://www.googleapis.com/books/v1/"
     const val API_KEY = "AIzaSyDX7T73Ry6CT75yla-oClTdDruDkEbeFn0"
@@ -42,7 +41,7 @@ object RetrofitInstance {
         .create(GoogleBooksApi::class.java)
 }
 
-// Data models for JSON parsing
+//Slide 56:
 data class BookResponse(val items: List<BookItem>)
 data class BookItem(val id: String, val volumeInfo: VolumeInfo)
 data class VolumeInfo(
@@ -53,6 +52,7 @@ data class VolumeInfo(
 )
 data class ImageLinks(val smallThumbnail: String?)
 
+//Slide 42:
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,6 +64,7 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun BookSearchApp() {
+    // Slide 65
     var query by remember { mutableStateOf("") }
     var books by remember { mutableStateOf<List<BookItem>>(emptyList()) }
 
@@ -76,7 +77,16 @@ fun BookSearchApp() {
             modifier = Modifier.fillMaxWidth()
         )
         Spacer(modifier = Modifier.height(8.dp))
-        Button(onClick = { searchBooks(query) { books = it } }, modifier = Modifier.fillMaxWidth()) {
+        Button(
+            onClick = {
+                if (query.isNotBlank()) {
+                    searchBooks(query) { books = it }
+                } else {
+                    println("Query is blank. Please enter a valid search term.")
+                }
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
             Text("Search")
         }
         Spacer(modifier = Modifier.height(8.dp))
@@ -85,13 +95,17 @@ fun BookSearchApp() {
 }
 
 fun searchBooks(query: String, onResult: (List<BookItem>) -> Unit) {
+    // Slide 25
     CoroutineScope(Dispatchers.IO).launch {
         try {
+            println("Searching for books with query: $query")
             val response = RetrofitInstance.api.searchBooks(query, RetrofitInstance.API_KEY)
+            println("Received response: ${response.items.size} items")
             withContext(Dispatchers.Main) {
                 onResult(response.items)
             }
         } catch (e: Exception) {
+            println("Error fetching books: ${e.message}")
             e.printStackTrace()
         }
     }
@@ -99,6 +113,7 @@ fun searchBooks(query: String, onResult: (List<BookItem>) -> Unit) {
 
 @Composable
 fun BookList(books: List<BookItem>) {
+    // Slide 42:
     LazyColumn {
         items(books) { book ->
             BookItemView(book)
@@ -111,7 +126,7 @@ fun BookItemView(book: BookItem) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clickable {  }
+            .clickable { }
             .padding(8.dp)
     ) {
         book.volumeInfo.imageLinks?.smallThumbnail?.let { url ->
